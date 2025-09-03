@@ -1,1 +1,930 @@
-# app
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>novaklar - Finanzas Empresariales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Waratah';
+            src: url('https://raw.githubusercontent.com/novaklar/web/main/waratah.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        .font-comme {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .bg-primary {
+            background-color: #00128a;
+        }
+        .bg-primary-darker {
+            background-color: #000c6d;
+        }
+        .bg-accent-transparent {
+            background-color: rgba(108, 145, 255, 0.3);
+        }
+        .text-accent {
+            color: #6c91ff;
+        }
+        .ring-accent {
+            --tw-ring-color: #6c91ff;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6c91ff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .alert-badge {
+            position: relative;
+        }
+        .alert-badge::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 12px;
+            height: 12px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        /* Colores personalizados para gr�ficas */
+        .advisor-colors {
+            background-color: #00128f;
+            background-color: #147a80;
+            background-color: #080a33;
+        }
+        .income-expense-colors {
+            background-color: #6c91ff;
+            background-color: #00128f;
+        }
+    </style>
+<script defer data-domain="ceonk.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiny.host/ad-script.js"></script><script defer data-domain="cfnk.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiny.host/ad-script.js"></script></head>
+<body class="bg-gray-100 min-h-screen p-4 font-comme">
+
+    <header class="w-full max-w-5xl mx-auto flex flex-col items-center text-center py-8">
+        <img src="https://raw.githubusercontent.com/novaklar/web/refs/heads/main/Novaklar.svg" alt="novaklar Logo" class="w-28 h-28 mb-4">
+        <h1 class="text-5xl font-bold mb-2 text-gray-800" style="font-family: 'Waratah', sans-serif;">novaklar</h1>
+        <p class="text-gray-600 text-lg">Finanzas empresariales</p>
+    </header>
+
+    <main class="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 mt-8">
+        
+        <!-- Columna izquierda - 5/12 -->
+        <div class="md:col-span-5 space-y-6">
+            <!-- Tarjeta de registro de transacci�n -->
+            <div class="bg-white rounded-xl p-6 shadow-lg space-y-4 border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">Registrar Transaccion</h2>
+                <form id="transaction-form" class="space-y-4">
+                    <div>
+                        <label for="transaction-date" class="block text-sm font-medium text-gray-700">Fecha:</label>
+                        <input type="date" id="transaction-date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-accent focus:border-accent">
+                    </div>
+                    <div>
+                        <label for="transaction-type" class="block text-sm font-medium text-gray-700">Tipo:</label>
+                        <select id="transaction-type" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-accent focus:border-accent">
+                            <option value="ingreso">Ingreso</option>
+                            <option value="egreso">Egreso</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="transaction-amount" class="block text-sm font-medium text-gray-700">Monto:</label>
+                        <input type="number" id="transaction-amount" placeholder="0" step="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-accent focus:border-accent">
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-darker focus:outline-none focus:ring-2 focus:ring-offset-2 ring-accent transition-colors duration-200">
+                        Guardar Transaccion
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Tarjeta de Notas -->
+            <div class="bg-white rounded-xl p-6 shadow-lg space-y-4 border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">Notas</h2>
+                <div id="notes-container" class="p-4 bg-gray-50 rounded-md min-h-[150px]">
+                    <p id="automatic-note" class="text-sm text-gray-600 italic">No hay registros recientes.</p>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Alertas -->
+            <div class="bg-white rounded-xl p-6 shadow-lg space-y-4 border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">Alertas</h2>
+                <div id="alerts-container" class="space-y-3">
+                    <p class="text-gray-500 text-sm italic">No hay alertas en este momento.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Columna derecha - 7/12 -->
+        <div class="md:col-span-7 space-y-6">
+            <!-- Tarjetas de metricas principales -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-primary text-white rounded-xl p-4 shadow-lg text-center transform transition-transform duration-200 hover:scale-105">
+                    <p class="text-lg font-medium mb-1">Balance Total</p>
+                    <p id="total-balance" class="text-3xl font-bold">$0</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-lg text-center border border-gray-200 transform transition-transform duration-200 hover:scale-105">
+                    <p class="text-lg font-medium mb-1 text-gray-800">PDV</p>
+                    <p id="avg-sales" class="text-3xl font-bold text-gray-800">0</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-lg text-center border border-gray-200 transform transition-transform duration-200 hover:scale-105">
+                    <p class="text-lg font-medium mb-1 text-gray-800">VT</p>
+                    <p id="total-sales" class="text-3xl font-bold text-gray-800">0</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow-lg text-center border border-gray-200 transform transition-transform duration-200 hover:scale-105">
+                    <p class="text-lg font-medium mb-1 text-gray-800">Crecimiento</p>
+                    <div class="flex items-center justify-center">
+                        <select id="growth-period" class="mr-2 rounded-md border-gray-300 shadow-sm p-1 text-xs focus:ring-accent focus:border-accent">
+                            <option value="daily">Dia</option>
+                            <option value="weekly">Semana</option>
+                            <option value="monthly">Mes</option>
+                        </select>
+                        <p id="growth-value" class="text-3xl font-bold text-gray-800">0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Graficas principales -->
+            <div class="grid grid-cols-1 gap-6">
+                <div class="bg-white rounded-xl p-6 shadow-lg text-center border border-gray-200">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Ingresos vs Egresos</h3>
+                    <canvas id="balance-chart"></canvas>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-lg text-center border border-gray-200">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Ventas por Asesora</h3>
+                    <canvas id="sales-by-advisor-pie-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Nueva seccion: Resumen de rendimiento mensual -->
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Rendimiento Mensual</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="text-center p-3 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-gray-600">Ingresos</p>
+                        <p id="monthly-income" class="text-xl font-bold text-blue-700">$0</p>
+                    </div>
+                    <div class="text-center p-3 bg-red-50 rounded-lg">
+                        <p class="text-sm text-gray-600">Egresos</p>
+                        <p id="monthly-expense" class="text-xl font-bold text-red-700">$0</p>
+                    </div>
+                    <div class="text-center p-3 bg-green-50 rounded-lg">
+                        <p class="text-sm text-gray-600">Neto</p>
+                        <p id="monthly-net" class="text-xl font-bold text-green-700">$0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grafica de tendencia -->
+            <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Tendencia de Balance</h3>
+                    <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
+                        <select id="date-range-selector" class="rounded-md border-gray-300 shadow-sm p-2 text-sm focus:ring-accent focus:border-accent">
+                            <option value="all">Todo el periodo</option>
+                            <option value="7">Ultimos 7 dias</option>
+                            <option value="15">Ultimos 15 dias</option>
+                            <option value="30">Ultimos 30 dias</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                        <div id="custom-date-range" class="hidden flex-nowrap items-center gap-2">
+                            <input type="date" id="start-date" class="rounded-md border-gray-300 shadow-sm p-2 text-sm focus:ring-accent focus:border-accent">
+                            <span>a</span>
+                            <input type="date" id="end-date" class="rounded-md border-gray-300 shadow-sm p-2 text-sm focus:ring-accent focus:border-accent">
+                            <button id="apply-date-range" class="bg-primary text-white px-3 py-2 rounded-md text-sm">Aplicar</button>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="balance-trend-chart"></canvas>
+            </div>
+
+            <!-- Proyeccion y tabla de asesoras -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Proyeccion de Flujo</h3>
+                    <div class="text-center py-4">
+                        <p class="text-3xl font-bold text-gray-800" id="cash-flow-projection">$0</p>
+                        <p class="text-sm text-gray-600 mt-2">Balance proyectado al final del mes</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Ventas por Asesora</h3>
+                    <div id="advisors-table-container" class="overflow-x-auto">
+                        <div class="flex justify-center items-center py-12" id="advisors-loading-state">
+                            <div class="loading-spinner"></div>
+                        </div>
+                        <table class="min-w-full divide-y divide-gray-300 hidden" id="advisors-table">
+                            <thead class="bg-primary-darker">
+                                <tr class="text-white">
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Asesora</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Ventas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="advisors-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div class="w-full max-w-5xl mx-auto space-y-8 mt-8">
+        <div class="bg-white rounded-xl p-6 shadow-lg space-y-4 border border-gray-200">
+            <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">Historial de Transacciones</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-300">
+                    <thead class="bg-primary-darker">
+                        <tr class="text-white">
+                            <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Fecha</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Tipo</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-history-body" class="bg-white divide-y divide-gray-200">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex justify-center py-8">
+            <button id="clear-data-button" class="py-3 px-8 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                Eliminar Todos los Datos
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ---- Configuracion ----
+            const SPREADSHEET_ID = '1D54c79yejujdFIJKVu4m3iM3ndUVnxP_fSgwSqGec5U';
+            const SHEET_NAME = 'Form_Responses1';
+            const SALES_COLUMN_START = 1; 
+            const SALES_COLUMN_END = 10;
+            const ADVISOR_COLUMN_INDEX = 11;
+            const UPDATE_INTERVAL = 5 * 60 * 1000;
+            
+            // ---- Elementos del DOM ----
+            const transactionForm = document.getElementById('transaction-form');
+            const totalBalanceEl = document.getElementById('total-balance');
+            const avgSalesEl = document.getElementById('avg-sales');
+            const totalSalesEl = document.getElementById('total-sales');
+            const growthValueEl = document.getElementById('growth-value');
+            const growthPeriodSelector = document.getElementById('growth-period');
+            const cashFlowProjectionEl = document.getElementById('cash-flow-projection');
+            const automaticNoteEl = document.getElementById('automatic-note');
+            const alertsContainer = document.getElementById('alerts-container');
+            const transactionHistoryBody = document.getElementById('transaction-history-body');
+            const advisorsTableBody = document.getElementById('advisors-table-body');
+            const balanceChartCanvas = document.getElementById('balance-chart').getContext('2d');
+            const balanceTrendChartCanvas = document.getElementById('balance-trend-chart').getContext('2d');
+            const salesByAdvisorPieChartCanvas = document.getElementById('sales-by-advisor-pie-chart').getContext('2d');
+            const advisorsLoadingState = document.getElementById('advisors-loading-state');
+            const advisorsTable = document.getElementById('advisors-table');
+            const clearDataButton = document.getElementById('clear-data-button');
+            const dateRangeSelector = document.getElementById('date-range-selector');
+            const customDateRange = document.getElementById('custom-date-range');
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const applyDateRangeBtn = document.getElementById('apply-date-range');
+            const monthlyIncomeEl = document.getElementById('monthly-income');
+            const monthlyExpenseEl = document.getElementById('monthly-expense');
+            const monthlyNetEl = document.getElementById('monthly-net');
+
+            // ---- Instancias de los graficos ----
+            let balanceChart;
+            let balanceTrendChart;
+            let salesByAdvisorPieChart;
+
+            // ---- Ayudantes y funciones de utilidad ----
+            const DateTime = luxon.DateTime;
+            const numberFormatOptions = { minimumFractionDigits: 0, maximumFractionDigits: 0 };
+            const saveToLocalStorage = (key, data) => localStorage.setItem(key, JSON.stringify(data));
+            const getFromLocalStorage = (key, defaultValue = []) => {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : defaultValue;
+                } catch (error) {
+                    console.error("Error al obtener de localStorage:", error);
+                    return defaultValue;
+                }
+            };
+            
+            // Colores para graficas segun especificaciones
+            const advisorColors = ['#00128f', '#147a80', '#080a33'];
+            const incomeExpenseColors = ['#6c91ff', '#00128f'];
+            
+            // ---- Gestion de datos de la aplicacion ----
+            let transactions = getFromLocalStorage('novaklar_transactions', []);
+            let dateFilter = { type: 'all', start: null, end: null };
+
+            // ---- Funciones para las nuevas caracteristicas ----
+            
+            // 1. Calculo de crecimiento (diario, semanal, mensual)
+            const calculateGrowth = (period) => {
+                const now = DateTime.now();
+                let currentPeriodIncome = 0;
+                let previousPeriodIncome = 0;
+                
+                switch(period) {
+                    case 'daily':
+                        // Crecimiento diario: comparar hoy con ayer
+                        const today = now.toISODate();
+                        const yesterday = now.minus({days: 1}).toISODate();
+                        
+                        currentPeriodIncome = transactions
+                            .filter(t => t.date === today && t.type === 'ingreso')
+                            .reduce((sum, t) => sum + t.amount, 0);
+                        
+                        previousPeriodIncome = transactions
+                            .filter(t => t.date === yesterday && t.type === 'ingreso')
+                            .reduce((sum, t) => sum + t.amount, 0);
+                        break;
+                        
+                    case 'weekly':
+                        // Crecimiento semanal: comparar esta semana con la semana pasada
+                        const currentWeekStart = now.startOf('week').toISODate();
+                        const currentWeekEnd = now.endOf('week').toISODate();
+                        
+                        const lastWeekStart = now.minus({weeks: 1}).startOf('week').toISODate();
+                        const lastWeekEnd = now.minus({weeks: 1}).endOf('week').toISODate();
+                        
+                        currentPeriodIncome = transactions
+                            .filter(t => {
+                                return t.date >= currentWeekStart && 
+                                       t.date <= currentWeekEnd && 
+                                       t.type === 'ingreso';
+                            })
+                            .reduce((sum, t) => sum + t.amount, 0);
+                        
+                        previousPeriodIncome = transactions
+                            .filter(t => {
+                                return t.date >= lastWeekStart && 
+                                       t.date <= lastWeekEnd && 
+                                       t.type === 'ingreso';
+                            })
+                            .reduce((sum, t) => sum + t.amount, 0);
+                        break;
+                        
+                    case 'monthly':
+                        // Crecimiento mensual: comparar este mes con el mes anterior
+                        const currentMonth = now.month;
+                        const currentYear = now.year;
+                        
+                        const lastMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+                        const lastMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+                        
+                        currentPeriodIncome = transactions
+                            .filter(t => {
+                                const date = DateTime.fromISO(t.date);
+                                return date.month === currentMonth && 
+                                       date.year === currentYear && 
+                                       t.type === 'ingreso';
+                            })
+                            .reduce((sum, t) => sum + t.amount, 0);
+                        
+                        previousPeriodIncome = transactions
+                            .filter(t => {
+                                const date = DateTime.fromISO(t.date);
+                                return date.month === lastMonth && 
+                                       date.year === lastMonthYear && 
+                                       t.type === 'ingreso';
+                            })
+                            .reduce((sum, t) => sum + t.amount, 0);
+                        break;
+                }
+                
+                // Calcular crecimiento porcentual
+                let growthPercentage = 0;
+                if (previousPeriodIncome > 0) {
+                    growthPercentage = ((currentPeriodIncome - previousPeriodIncome) / previousPeriodIncome) * 100;
+                } else if (currentPeriodIncome > 0) {
+                    growthPercentage = 100; // Crecimiento infinito (de 0 a positivo)
+                }
+                
+                growthValueEl.textContent = `${growthPercentage.toFixed(1)}%`;
+                growthValueEl.className = `text-3xl font-bold ${growthPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            };
+            
+            // 2. Proyeccion de flujo de caja
+            const calculateCashFlowProjection = () => {
+                const now = DateTime.now();
+                const daysInMonth = now.daysInMonth;
+                const daysPassed = now.day;
+                
+                // Calcular ingresos y egresos diarios promedio
+                const dailyIncome = transactions
+                    .filter(t => {
+                        const date = DateTime.fromISO(t.date);
+                        return date.month === now.month && date.year === now.year && t.type === 'ingreso';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0) / daysPassed;
+                
+                const dailyExpense = transactions
+                    .filter(t => {
+                        const date = DateTime.fromISO(t.date);
+                        return date.month === now.month && date.year === now.year && t.type === 'egreso';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0) / daysPassed;
+                
+                // Calcular balance actual
+                const currentBalance = transactions.reduce((sum, t) => {
+                    return t.type === 'ingreso' ? sum + t.amount : sum - t.amount;
+                }, 0);
+                
+                // Proyectar balance al final del mes
+                const daysRemaining = daysInMonth - daysPassed;
+                const projectedIncome = dailyIncome * daysRemaining;
+                const projectedExpense = dailyExpense * daysRemaining;
+                const projectedBalance = currentBalance + projectedIncome - projectedExpense;
+                
+                cashFlowProjectionEl.textContent = `$${projectedBalance.toLocaleString('es-CO', numberFormatOptions)}`;
+                cashFlowProjectionEl.className = `text-3xl font-bold ${projectedBalance >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            };
+            
+            // 3. Alertas inteligentes
+            const checkForAlerts = () => {
+                alertsContainer.innerHTML = '';
+                const alerts = [];
+                
+                // Alerta 1: Si los egresos superan los ingresos en un periodo
+                const now = DateTime.now();
+                const currentMonthIncome = transactions
+                    .filter(t => {
+                        const date = DateTime.fromISO(t.date);
+                        return date.month === now.month && date.year === now.year && t.type === 'ingreso';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                const currentMonthExpense = transactions
+                    .filter(t => {
+                        const date = DateTime.fromISO(t.date);
+                        return date.month === now.month && date.year === now.year && t.type === 'egreso';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                if (currentMonthExpense > currentMonthIncome) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `Los egresos ($${currentMonthExpense.toLocaleString('es-CO')}) superan los ingresos ($${currentMonthIncome.toLocaleString('es-CO')}) este mes.`
+                    });
+                }
+                
+                // Alerta 2: Si en un dia supero mi promedio de ventas
+                const today = now.toISODate();
+                const todaySales = transactions
+                    .filter(t => t.date === today && t.type === 'ingreso')
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                const avgDailySales = currentMonthIncome / now.day;
+                
+                if (todaySales > avgDailySales * 1.5) { // 50% mas que el promedio
+                    alerts.push({
+                        type: 'success',
+                        message: `Hoy superaste tu promedio de ventas diario. Ventas de hoy: $${todaySales.toLocaleString('es-CO')} vs. promedio: $${avgDailySales.toLocaleString('es-CO', {maximumFractionDigits: 0})}`
+                    });
+                }
+                
+                // Mostrar alertas o mensaje predeterminado
+                if (alerts.length === 0) {
+                    alertsContainer.innerHTML = '<p class="text-gray-500 text-sm italic">No hay alertas en este momento.</p>';
+                } else {
+                    alerts.forEach(alert => {
+                        const alertEl = document.createElement('div');
+                        alertEl.className = `p-3 rounded-md text-sm ${alert.type === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`;
+                        alertEl.textContent = alert.message;
+                        alertsContainer.appendChild(alertEl);
+                    });
+                }
+            };
+            
+            // 4. Filtro de fechas en tendencia de balance
+            const setupDateRangeFilter = () => {
+                dateRangeSelector.addEventListener('change', function() {
+                    if (this.value === 'custom') {
+                        customDateRange.classList.remove('hidden');
+                    } else {
+                        customDateRange.classList.add('hidden');
+                        applyDateFilter(this.value);
+                    }
+                });
+                
+                applyDateRangeBtn.addEventListener('click', () => {
+                    if (startDateInput.value && endDateInput.value) {
+                        dateFilter = {
+                            type: 'custom',
+                            start: startDateInput.value,
+                            end: endDateInput.value
+                        };
+                        updateBalanceTrendChart();
+                    }
+                });
+                
+                // Establecer valores predeterminados para los selectores de fecha
+                const today = DateTime.now().toISODate();
+                const sevenDaysAgo = DateTime.now().minus({days: 7}).toISODate();
+                startDateInput.value = sevenDaysAgo;
+                endDateInput.value = today;
+            };
+            
+            const applyDateFilter = (rangeValue) => {
+                const now = DateTime.now();
+                
+                switch(rangeValue) {
+                    case 'all':
+                        dateFilter = { type: 'all', start: null, end: null };
+                        break;
+                    case '7':
+                        dateFilter = {
+                            type: 'period',
+                            start: now.minus({days: 7}).toISODate(),
+                            end: now.toISODate()
+                        };
+                        break;
+                    case '15':
+                        dateFilter = {
+                            type: 'period',
+                            start: now.minus({days: 15}).toISODate(),
+                            end: now.toISODate()
+                        };
+                        break;
+                    case '30':
+                        dateFilter = {
+                            type: 'period',
+                            start: now.minus({days: 30}).toISODate(),
+                            end: now.toISODate()
+                        };
+                        break;
+                }
+                
+                updateBalanceTrendChart();
+            };
+            
+            // 5. Notas automaticas
+            const updateAutomaticNote = () => {
+                if (transactions.length > 0) {
+                    const lastTransaction = [...transactions].sort((a, b) => 
+                        new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00'))
+                    )[0];
+                    
+                    const now = DateTime.now();
+                    const formattedDate = now.toLocaleString(DateTime.DATE_FULL);
+                    const formattedTime = now.toLocaleString(DateTime.TIME_SIMPLE);
+                    
+                    automaticNoteEl.textContent = `Ultimo registro: ${formattedDate}, ${formattedTime}`;
+                } else {
+                    automaticNoteEl.textContent = 'No hay registros recientes.';
+                }
+            };
+            
+            // 6. Nueva funcion: Resumen mensual
+            const updateMonthlySummary = () => {
+                const now = DateTime.now();
+                const currentMonth = now.month;
+                const currentYear = now.year;
+                
+                const monthlyIncome = transactions
+                    .filter(t => {
+                        const date = DateTime.fromISO(t.date);
+                        return date.month === currentMonth && date.year === currentYear && t.type === 'ingreso';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                const monthlyExpense = transactions
+                    .filter(t => {
+                        const date = DateTime.fromISO(t.date);
+                        return date.month === currentMonth && date.year === currentYear && t.type === 'egreso';
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                const monthlyNet = monthlyIncome - monthlyExpense;
+                
+                monthlyIncomeEl.textContent = `$${monthlyIncome.toLocaleString('es-CO', numberFormatOptions)}`;
+                monthlyExpenseEl.textContent = `$${monthlyExpense.toLocaleString('es-CO', numberFormatOptions)}`;
+                monthlyNetEl.textContent = `$${monthlyNet.toLocaleString('es-CO', numberFormatOptions)}`;
+                monthlyNetEl.className = `text-xl font-bold ${monthlyNet >= 0 ? 'text-green-700' : 'text-red-700'}`;
+            };
+
+            // ---- Logica de la UI ----
+            const renderTransactions = () => {
+                // Renderizar historial completo
+                transactionHistoryBody.innerHTML = '';
+                const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+                sortedTransactions.forEach(t => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-gray-50 transition-colors duration-150";
+                    row.innerHTML = `
+                        <td class="px-4 py-2 whitespace-nowrap text-gray-800">${t.date}</td>
+                        <td class="px-4 py-2 whitespace-nowrap capitalize text-gray-800">${t.type}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-gray-800">$${t.amount.toLocaleString('es-CO', numberFormatOptions)}</td>
+                    `;
+                    transactionHistoryBody.appendChild(row);
+                });
+            };
+
+            const updateTotalBalance = () => {
+                const total = transactions.reduce((sum, t) => t.type === 'ingreso' ? sum + t.amount : sum - t.amount, 0);
+                totalBalanceEl.textContent = `$${total.toLocaleString('es-CO', numberFormatOptions)}`;
+            };
+
+            const updateCharts = () => {
+                // Destruir instancias previas para evitar conflictos
+                if (balanceChart) balanceChart.destroy();
+                if (salesByAdvisorPieChart) salesByAdvisorPieChart.destroy();
+
+                const totalIncome = transactions.filter(t => t.type === 'ingreso').reduce((sum, t) => sum + t.amount, 0);
+                const totalExpense = transactions.filter(t => t.type === 'egreso').reduce((sum, t) => sum + t.amount, 0);
+                
+                // Grafico de Proporcion de Ingresos vs. Egresos con colores especificos
+                balanceChart = new Chart(balanceChartCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Ingresos', 'Egresos'],
+                        datasets: [{
+                            data: [totalIncome, totalExpense],
+                            backgroundColor: incomeExpenseColors,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        plugins: { 
+                            legend: { 
+                                position: 'bottom', 
+                                align: 'center',
+                                labels: { color: '#333', usePointStyle: true } 
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((sum, current) => sum + current, 0);
+                                        const percentage = ((value / total) * 100).toFixed(2) + '%';
+                                        return `${label}: ${percentage}`;
+                                    }
+                                }
+                            }
+                        } 
+                    }
+                });
+
+                updateBalanceTrendChart();
+            };
+
+            const updateBalanceTrendChart = () => {
+                if (balanceTrendChart) balanceTrendChart.destroy();
+                
+                // Filtrar transacciones segun el rango de fechas seleccionado
+                let filteredTransactions = [...transactions];
+                if (dateFilter.type !== 'all') {
+                    filteredTransactions = transactions.filter(t => {
+                        const transactionDate = t.date;
+                        return transactionDate >= dateFilter.start && transactionDate <= dateFilter.end;
+                    });
+                }
+                
+                const dailyData = filteredTransactions.reduce((acc, t) => {
+                    const date = t.date;
+                    if (!acc[date]) acc[date] = { income: 0, expense: 0 };
+                    if (t.type === 'ingreso') acc[date].income += t.amount;
+                    else acc[date].expense += t.amount;
+                    return acc;
+                }, {});
+
+                const sortedDates = Object.keys(dailyData).sort((a, b) => new Date(a) - new Date(b));
+                let runningBalance = 0;
+                const dailyBalances = sortedDates.map(date => {
+                    runningBalance += dailyData[date].income - dailyData[date].expense;
+                    return runningBalance;
+                });
+                
+                balanceTrendChart = new Chart(balanceTrendChartCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: sortedDates,
+                        datasets: [{
+                            label: 'Balance Diario',
+                            data: dailyBalances,
+                            borderColor: '#6c91ff',
+                            backgroundColor: 'rgba(108, 145, 255, 0.1)',
+                            tension: 0.1,
+                            fill: true
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        scales: { 
+                            x: { 
+                                title: { display: true, text: 'Fecha', color: '#333' }, 
+                                ticks: { color: '#333' }
+                            }, 
+                            y: { 
+                                beginAtZero: false, 
+                                title: { display: true, text: 'Balance ($)', color: '#333' },
+                                ticks: { color: '#333' }
+                            } 
+                        } 
+                    }
+                });
+            };
+
+            // ---- Integracion con Google Sheets ----
+            const parseSalesValue = (value) => parseInt(String(value).replace(/[^0-9]/g, ''), 10) || 0;
+            const normalizeName = (name) => (name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, ' ');
+
+            const fetchAndProcessSheetsData = async () => {
+                advisorsLoadingState.classList.remove('hidden');
+                advisorsTable.classList.add('hidden');
+
+                try {
+                    const cacheBuster = new Date().getTime();
+                    const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&range=A:L&t=${cacheBuster}`;
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Error ${response.status}`);
+                    
+                    const text = await response.text();
+                    const json = JSON.parse(text.substring(47).slice(0, -2));
+                    if (!json.table?.rows) throw new Error('Estructura de datos inesperada');
+                    
+                    let totalSales = 0;
+                    const advisorsMap = new Map();
+                    let datesWithSales = new Set();
+                    
+                    json.table.rows.forEach(row => {
+                        const advisorCell = row.c[ADVISOR_COLUMN_INDEX];
+                        if (advisorCell && advisorCell.v) {
+                            const advisorName = String(advisorCell.v).trim();
+                            const normalizedName = normalizeName(advisorName);
+                            if (normalizedName) {
+                                let dailySales = 0;
+                                for (let i = SALES_COLUMN_START; i <= SALES_COLUMN_END; i++) {
+                                    const cell = row.c[i];
+                                    dailySales += parseSalesValue(cell ? (cell.v || cell.f) : 0);
+                                }
+                                
+                                if (!advisorsMap.has(normalizedName)) {
+                                    advisorsMap.set(normalizedName, { name: advisorName, sales: 0 });
+                                }
+                                advisorsMap.get(normalizedName).sales += dailySales;
+                                totalSales += dailySales;
+                                
+                                if (dailySales > 0 && row.c[0] && row.c[0].f) {
+                                    datesWithSales.add(row.c[0].f);
+                                }
+                            }
+                        }
+                    });
+                    
+                    const advisorsData = Array.from(advisorsMap.values());
+                    renderAdvisors(advisorsData);
+                    updateSalesStats(totalSales, datesWithSales.size);
+                    updateSalesByAdvisorPieChart(advisorsData);
+                    
+                } catch (error) {
+                    console.error("Error fetching or processing Sheets data:", error);
+                    advisorsTableBody.innerHTML = '<tr><td colspan="2" class="px-4 py-2 text-center text-red-500">Error al cargar los datos.</td></tr>';
+                } finally {
+                    advisorsLoadingState.classList.add('hidden');
+                    advisorsTable.classList.remove('hidden');
+                }
+            };
+            
+            const updateSalesStats = (totalSales, numberOfDays) => {
+                const avgSales = numberOfDays > 0 ? totalSales / numberOfDays : 0;
+                avgSalesEl.textContent = Math.round(avgSales).toLocaleString('es-CO', numberFormatOptions);
+                totalSalesEl.textContent = totalSales.toLocaleString('es-CO', numberFormatOptions);
+            };
+            
+            const renderAdvisors = (advisors) => {
+                advisorsTableBody.innerHTML = '';
+                const sortedAdvisors = advisors.sort((a, b) => b.sales - a.sales);
+                if (sortedAdvisors.length > 0) {
+                    sortedAdvisors.forEach(advisor => {
+                        const row = document.createElement('tr');
+                        row.className = "hover:bg-gray-50 transition-colors duration-150";
+                        row.innerHTML = `<td class="px-4 py-2 whitespace-nowrap text-gray-800">${advisor.name}</td><td class="px-4 py-2 whitespace-nowrap text-gray-800">${advisor.sales}</td>`;
+                        advisorsTableBody.appendChild(row);
+                    });
+                } else {
+                    advisorsTableBody.innerHTML = '<tr><td colspan="2" class="px-4 py-2 text-center text-gray-500">No hay datos de asesoras disponibles.</td></tr>';
+                }
+            };
+
+            const updateSalesByAdvisorPieChart = (advisorsData) => {
+                if (salesByAdvisorPieChart) salesByAdvisorPieChart.destroy();
+
+                // Ordenar asesoras por ventas (de mayor a menor)
+                const sortedAdvisors = [...advisorsData].sort((a, b) => b.sales - a.sales);
+                const labels = sortedAdvisors.map(d => d.name);
+                const data = sortedAdvisors.map(d => d.sales);
+                
+                // Usar colores especificos para la grafica de asesoras
+                const backgroundColors = sortedAdvisors.map((_, index) => {
+                    return advisorColors[index % advisorColors.length];
+                });
+
+                salesByAdvisorPieChart = new Chart(salesByAdvisorPieChartCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels,
+                        datasets: [{
+                            data,
+                            backgroundColor: backgroundColors,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                align: 'center',
+                                labels: { color: '#333', usePointStyle: true }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        const total = context.dataset.data.reduce((sum, current) => sum + current, 0);
+                                        const percentage = ((value / total) * 100).toFixed(2) + '%';
+                                        return `${label}: $${value.toLocaleString('es-CO')} (${percentage})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            };
+
+            // ---- Logica de Eliminacion de Datos ----
+            clearDataButton.addEventListener('click', () => {
+                if (confirm('Estas seguro de que quieres eliminar todos los datos de transacciones? Esta accion es irreversible.')) {
+                    localStorage.removeItem('novaklar_transactions');
+                    transactions = [];
+                    updateUI();
+                    alert('Todos los datos han sido eliminados.');
+                }
+            });
+
+            // ---- Bucle de la aplicacion principal ----
+            const updateUI = () => {
+                updateTotalBalance();
+                updateCharts();
+                renderTransactions();
+                calculateGrowth(growthPeriodSelector.value);
+                calculateCashFlowProjection();
+                checkForAlerts();
+                updateAutomaticNote();
+                updateMonthlySummary();
+                fetchAndProcessSheetsData();
+            };
+
+            // ---- Event Listeners ----
+            transactionForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newTransaction = {
+                    date: document.getElementById('transaction-date').value,
+                    type: document.getElementById('transaction-type').value,
+                    amount: parseInt(document.getElementById('transaction-amount').value),
+                    time: DateTime.now().toFormat('HH:mm:ss')
+                };
+                transactions.push(newTransaction);
+                saveToLocalStorage('novaklar_transactions', transactions);
+                updateUI();
+                transactionForm.reset();
+                document.getElementById('transaction-date').value = DateTime.now().toISODate();
+            });
+
+            growthPeriodSelector.addEventListener('change', () => {
+                calculateGrowth(growthPeriodSelector.value);
+            });
+
+            // ---- Inicializacion ----
+            // Establecer fecha actual como predeterminada en el formulario
+            document.getElementById('transaction-date').value = DateTime.now().toISODate();
+            
+            setupDateRangeFilter();
+            updateUI();
+            setInterval(fetchAndProcessSheetsData, UPDATE_INTERVAL);
+        });
+    </script>
+</body>
+</html>
