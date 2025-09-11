@@ -341,6 +341,12 @@
             // ---- Ayudantes y funciones de utilidad ----
             const DateTime = luxon.DateTime;
             const numberFormatOptions = { minimumFractionDigits: 0, maximumFractionDigits: 0 };
+            
+            // Función para generar IDs únicos
+            const generateUniqueId = () => {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            };
+            
             const saveToLocalStorage = (key, data) => localStorage.setItem(key, JSON.stringify(data));
             const getFromLocalStorage = (key, defaultValue = []) => {
                 try {
@@ -521,7 +527,7 @@
                 
                 const avgDailySales = currentMonthIncome / now.day;
                 
-                if (todaySales > avgDailySales * 1.5) { // 50% mas que el promedio
+                if (todaySales > avgDailySales * 1.5) { // 50% más que el promedio
                     alerts.push({
                         type: 'success',
                         message: `Hoy superaste tu promedio de ventas diario. Ventas de hoy: $${todaySales.toLocaleString('es-CO')} vs. promedio: $${avgDailySales.toLocaleString('es-CO', {maximumFractionDigits: 0})}`
@@ -674,19 +680,14 @@
                 }
             };
 
-            // 9. Nueva funcion: Eliminar transacciones específicas
+            // 9. Nueva funcion: Eliminar transacciones específicas por ID
             const setupTransactionDeletion = () => {
                 // Manejar clic en botón de eliminar
                 deleteSelectedButton.addEventListener('click', () => {
                     if (selectedTransactions.size > 0) {
                         if (confirm(`¿Estás seguro de que quieres eliminar ${selectedTransactions.size} transacción(es)?`)) {
-                            // Convertir el Set a un array y ordenar de mayor a menor
-                            const indicesToDelete = Array.from(selectedTransactions).sort((a, b) => b - a);
-                            
-                            // Eliminar transacciones comenzando por los índices más altos
-                            indicesToDelete.forEach(index => {
-                                transactions.splice(index, 1);
-                            });
+                            // Filtrar transacciones para mantener solo las no seleccionadas
+                            transactions = transactions.filter(t => !selectedTransactions.has(t.id));
                             
                             // Guardar y actualizar
                             saveToLocalStorage('novaklar_transactions', transactions);
@@ -705,7 +706,7 @@
                 transactionHistoryBody.innerHTML = '';
                 const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
                 
-                sortedTransactions.forEach((t, index) => {
+                sortedTransactions.forEach((t) => {
                     const row = document.createElement('tr');
                     row.className = "hover:bg-gray-50 transition-colors duration-150";
                     
@@ -713,12 +714,12 @@
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.className = 'transaction-checkbox';
-                    checkbox.dataset.index = index;
+                    checkbox.dataset.id = t.id;
                     checkbox.addEventListener('change', (e) => {
                         if (e.target.checked) {
-                            selectedTransactions.add(index);
+                            selectedTransactions.add(t.id);
                         } else {
-                            selectedTransactions.delete(index);
+                            selectedTransactions.delete(t.id);
                         }
                         toggleDeleteButton();
                     });
@@ -1040,6 +1041,7 @@
             transactionForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const newTransaction = {
+                    id: generateUniqueId(), // Generar ID único
                     date: document.getElementById('transaction-date').value,
                     type: document.getElementById('transaction-type').value,
                     amount: parseInt(document.getElementById('transaction-amount').value),
