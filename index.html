@@ -665,23 +665,28 @@
                 lastMonthIncomeEl.textContent = `$${lastMonthIncome.toLocaleString('es-CO', numberFormatOptions)}`;
             };
 
-            // 8. Nueva funcion: Eliminar transacciones específicas
-            const setupTransactionDeletion = () => {
-                // Mostrar/ocultar botón de eliminar según selección
-                const toggleDeleteButton = () => {
-                    if (selectedTransactions.size > 0) {
-                        deleteSelectedButton.classList.remove('hidden');
-                    } else {
-                        deleteSelectedButton.classList.add('hidden');
-                    }
-                };
+            // 8. Funcion para mostrar/ocultar botón de eliminar
+            const toggleDeleteButton = () => {
+                if (selectedTransactions.size > 0) {
+                    deleteSelectedButton.classList.remove('hidden');
+                } else {
+                    deleteSelectedButton.classList.add('hidden');
+                }
+            };
 
+            // 9. Nueva funcion: Eliminar transacciones específicas
+            const setupTransactionDeletion = () => {
                 // Manejar clic en botón de eliminar
                 deleteSelectedButton.addEventListener('click', () => {
                     if (selectedTransactions.size > 0) {
                         if (confirm(`¿Estás seguro de que quieres eliminar ${selectedTransactions.size} transacción(es)?`)) {
-                            // Filtrar transacciones manteniendo solo las no seleccionadas
-                            transactions = transactions.filter((_, index) => !selectedTransactions.has(index));
+                            // Convertir el Set a un array y ordenar de mayor a menor
+                            const indicesToDelete = Array.from(selectedTransactions).sort((a, b) => b - a);
+                            
+                            // Eliminar transacciones comenzando por los índices más altos
+                            indicesToDelete.forEach(index => {
+                                transactions.splice(index, 1);
+                            });
                             
                             // Guardar y actualizar
                             saveToLocalStorage('novaklar_transactions', transactions);
@@ -743,15 +748,6 @@
                     
                     transactionHistoryBody.appendChild(row);
                 });
-                
-                // Función para mostrar/ocultar botón de eliminar
-                const toggleDeleteButton = () => {
-                    if (selectedTransactions.size > 0) {
-                        deleteSelectedButton.classList.remove('hidden');
-                    } else {
-                        deleteSelectedButton.classList.add('hidden');
-                    }
-                };
                 
                 toggleDeleteButton();
             };
