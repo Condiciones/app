@@ -111,11 +111,30 @@
                 </form>
             </div>
             
+            <!-- Nueva tarjeta: Ventas Totales Manuales (VTM) -->
+            <div class="bg-white rounded-xl p-6 shadow-lg space-y-4 border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">VTM</h2>
+                <form id="manual-sales-form" class="space-y-4">
+                    <div>
+                        <label for="manual-sales-amount" class="block text-sm font-medium text-gray-700">Número de Ventas:</label>
+                        <input type="number" id="manual-sales-amount" placeholder="0" step="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-accent focus:border-accent">
+                    </div>
+                    <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-darker focus:outline-none focus:ring-2 focus:ring-offset-2 ring-accent transition-colors duration-200">
+                        Agregar Ventas
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-600">Total VTM:</p>
+                    <p id="manual-sales-total" class="text-2xl font-bold text-green-600">0</p>
+                </div>
+            </div>
+            
             <!-- Tarjeta de Notas -->
             <div class="bg-white rounded-xl p-6 shadow-lg space-y-4 border border-gray-200">
                 <h2 class="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">Notas</h2>
                 <div id="notes-container" class="p-4 bg-gray-50 rounded-md min-h-[150px]">
                     <p id="automatic-note" class="text-sm text-gray-600 italic">No hay registros recientes.</p>
+                    <p id="last-transaction-note" class="text-sm text-gray-600 mt-2"></p>
                 </div>
             </div>
 
@@ -306,6 +325,8 @@
             
             // ---- Elementos del DOM ----
             const transactionForm = document.getElementById('transaction-form');
+            const manualSalesForm = document.getElementById('manual-sales-form');
+            const manualSalesTotalEl = document.getElementById('manual-sales-total');
             const totalBalanceEl = document.getElementById('total-balance');
             const avgSalesEl = document.getElementById('avg-sales');
             const totalSalesEl = document.getElementById('total-sales');
@@ -313,6 +334,7 @@
             const growthPeriodSelector = document.getElementById('growth-period');
             const cashFlowProjectionEl = document.getElementById('cash-flow-projection');
             const automaticNoteEl = document.getElementById('automatic-note');
+            const lastTransactionNoteEl = document.getElementById('last-transaction-note');
             const alertsContainer = document.getElementById('alerts-container');
             const transactionHistoryBody = document.getElementById('transaction-history-body');
             const advisorsTableBody = document.getElementById('advisors-table-body');
@@ -364,12 +386,18 @@
             
             // ---- Gestion de datos de la aplicacion ----
             let transactions = getFromLocalStorage('novaklar_transactions', []);
+            let manualSalesTotal = getFromLocalStorage('novaklar_manual_sales_total', 0);
             let dateFilter = { type: 'all', start: null, end: null };
             let selectedTransactions = new Set();
 
             // ---- Funciones para las nuevas caracteristicas ----
             
-            // 1. Calculo de crecimiento (diario, semanal, mensual)
+            // 1. Sistema de ventas manuales simplificado
+            const updateManualSalesTotal = () => {
+                manualSalesTotalEl.textContent = manualSalesTotal.toLocaleString('es-CO', numberFormatOptions);
+            };
+            
+            // 2. Calculo de crecimiento (diario, semanal, mensual)
             const calculateGrowth = (period) => {
                 const now = DateTime.now();
                 let currentPeriodIncome = 0;
@@ -455,7 +483,7 @@
                 growthValueEl.className = `text-3xl font-bold ${growthPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`;
             };
             
-            // 2. Proyeccion de flujo de caja
+            // 3. Proyeccion de flujo de caja
             const calculateCashFlowProjection = () => {
                 const now = DateTime.now();
                 const daysInMonth = now.daysInMonth;
@@ -491,7 +519,7 @@
                 cashFlowProjectionEl.className = `text-3xl font-bold ${projectedBalance >= 0 ? 'text-green-600' : 'text-red-600'}`;
             };
             
-            // 3. Alertas inteligentes
+            // 4. Alertas inteligentes
             const checkForAlerts = () => {
                 alertsContainer.innerHTML = '';
                 const alerts = [];
@@ -547,7 +575,7 @@
                 }
             };
             
-            // 4. Filtro de fechas en tendencia de balance
+            // 5. Filtro de fechas en tendencia de balance
             const setupDateRangeFilter = () => {
                 dateRangeSelector.addEventListener('change', function() {
                     if (this.value === 'custom') {
@@ -609,7 +637,7 @@
                 updateBalanceTrendChart();
             };
             
-            // 5. Notas automaticas
+            // 6. Notas automaticas mejoradas
             const updateAutomaticNote = () => {
                 if (transactions.length > 0) {
                     const lastTransaction = [...transactions].sort((a, b) => 
@@ -621,12 +649,18 @@
                     const formattedTime = now.toLocaleString(DateTime.TIME_SIMPLE);
                     
                     automaticNoteEl.textContent = `Ultimo registro: ${formattedDate}, ${formattedTime}`;
+                    
+                    // Mostrar información de la última transacción
+                    const lastTransactionDate = DateTime.fromISO(lastTransaction.date).toLocaleString(DateTime.DATE_FULL);
+                    const lastTransactionType = lastTransaction.type === 'ingreso' ? 'Ingreso' : 'Egreso';
+                    lastTransactionNoteEl.textContent = `Ultima transacción: ${lastTransactionType} de $${lastTransaction.amount.toLocaleString('es-CO')} el ${lastTransactionDate}`;
                 } else {
                     automaticNoteEl.textContent = 'No hay registros recientes.';
+                    lastTransactionNoteEl.textContent = '';
                 }
             };
             
-            // 6. Nueva funcion: Resumen mensual
+            // 7. Nueva funcion: Resumen mensual
             const updateMonthlySummary = () => {
                 const now = DateTime.now();
                 const currentMonth = now.month;
@@ -654,7 +688,7 @@
                 monthlyNetEl.className = `text-xl font-bold ${monthlyNet >= 0 ? 'text-green-700' : 'text-red-700'}`;
             };
 
-            // 7. Nueva funcion: Calcular ganancias del mes anterior
+            // 8. Nueva funcion: Calcular ganancias del mes anterior
             const calculateLastMonthIncome = () => {
                 const now = DateTime.now();
                 const lastMonth = now.minus({ months: 1 });
@@ -671,7 +705,7 @@
                 lastMonthIncomeEl.textContent = `$${lastMonthIncome.toLocaleString('es-CO', numberFormatOptions)}`;
             };
 
-            // 8. Funcion para mostrar/ocultar botón de eliminar
+            // 9. Funcion para mostrar/ocultar botón de eliminar
             const toggleDeleteButton = () => {
                 if (selectedTransactions.size > 0) {
                     deleteSelectedButton.classList.remove('hidden');
@@ -680,7 +714,7 @@
                 }
             };
 
-            // 9. Nueva funcion: Eliminar transacciones específicas por ID
+            // 10. Nueva funcion: Eliminar transacciones específicas por ID
             const setupTransactionDeletion = () => {
                 // Manejar clic en botón de eliminar
                 deleteSelectedButton.addEventListener('click', () => {
@@ -694,7 +728,6 @@
                             selectedTransactions.clear();
                             toggleDeleteButton();
                             updateUI();
-                            alert('Transacciones eliminadas correctamente.');
                         }
                     }
                 });
@@ -1014,12 +1047,13 @@
 
             // ---- Logica de Eliminacion de Datos ----
             clearDataButton.addEventListener('click', () => {
-                if (confirm('Estas seguro de que quieres eliminar todos los datos de transacciones? Esta accion es irreversible.')) {
+                if (confirm('Estas seguro de que quieres eliminar todos los datos de transacciones y ventas manuales? Esta accion es irreversible.')) {
                     localStorage.removeItem('novaklar_transactions');
+                    localStorage.removeItem('novaklar_manual_sales_total');
                     transactions = [];
+                    manualSalesTotal = 0;
                     selectedTransactions.clear();
                     updateUI();
-                    alert('Todos los datos han sido eliminados.');
                 }
             });
 
@@ -1028,6 +1062,7 @@
                 updateTotalBalance();
                 updateCharts();
                 renderTransactions();
+                updateManualSalesTotal();
                 calculateGrowth(growthPeriodSelector.value);
                 calculateCashFlowProjection();
                 checkForAlerts();
@@ -1054,12 +1089,24 @@
                 document.getElementById('transaction-date').value = DateTime.now().toISODate();
             });
 
+            // Event listener para el formulario de ventas manuales
+            manualSalesForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const amount = parseInt(document.getElementById('manual-sales-amount').value);
+                if (amount > 0) {
+                    manualSalesTotal += amount;
+                    saveToLocalStorage('novaklar_manual_sales_total', manualSalesTotal);
+                    updateManualSalesTotal();
+                    manualSalesForm.reset();
+                }
+            });
+
             growthPeriodSelector.addEventListener('change', () => {
                 calculateGrowth(growthPeriodSelector.value);
             });
 
             // ---- Inicializacion ----
-            // Establecer fecha actual como predeterminada en el formulario
+            // Establecer fecha actual como predeterminada en el formulario de transacciones
             document.getElementById('transaction-date').value = DateTime.now().toISODate();
             
             setupDateRangeFilter();
